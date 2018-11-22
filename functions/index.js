@@ -8,8 +8,10 @@ admin.initializeApp();
 const storage = require('@google-cloud/storage');
 const os = require('os');
 const path = require('path');
-var FfmpegCommand = require('fluent-ffmpeg');
-var command = new FfmpegCommand();
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegInstaller);
+//module.exports = ffmpeg;
 
 
 // // Create and Deploy Your First Cloud Functions
@@ -37,12 +39,16 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
     console.log("Resource does not exists");
     return;
   }
-  else if (path.basename(filePath).startsWith('renamed-')){
-    console.log("File had been renamed before");
+  else if (!contentType.startsWith('video/')) {
+    console.log('Not a video, will not process');
+    return;
+  }
+  else if (path.basename(filePath).startsWith('compressed-')){
+    console.log("File had been compressed before");
     return;
   }
   else{
-    console.log("File exists and not yet renamed");
+    console.log("File exists and not yet compressed");
     console.log(storage);
     console.log("gcs.bucket: " + storage.bucket);
     const destBucket = admin.storage().bucket(object.bucket);
@@ -54,11 +60,25 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
     const metadata = {contentType: contentType};
 
     return destBucket.file(filePath).download({
-      destination: tempFilePath // Download the file to destFilePath
+      destination: tempFilePath // Download the file to tempFilePath
     }).then(()=>{
-      console.log("Renaming File");
-      return destBucket.upload(tempFilePath, {
-        destination: 'renamed-' + path.basename(filePath),
+      console.log("Generating temp compressed file path");
+      console.log(path.dirname(tempFilePath));
+      console.log(path.basename(tempFilePath));
+      console.log(path.join(path.dirname(tempFilePath),"compressed-" + path.basename(tempFilePath)));
+      console.log("Compressing File");
+      var compressedVideoFilePath = path.join(path.dirname(tempFilePath),"compressed-" + path.basename(tempFilePath));
+      ffmpeg(tempFilePath).videoBitrate('1000k', true)
+                          .on('error', function(err) {
+                            console.log('An error occurred: ' + err.message);
+                          })
+                          .on('end', function() {
+                            console.log('Processing finished !');
+                          })
+                          .save(compressedVideoFilePath);
+      console.log("File compressed");
+      return destBucket.upload(compressedVideoFilePath, {
+        destination: 'compressed-' + path.basename(filePath),
         metadata: metadata
       })
     });
