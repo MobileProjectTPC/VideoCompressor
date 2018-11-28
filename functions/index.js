@@ -103,8 +103,8 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
     });
   }
 });
-*/
 
+*/
 
 /**
  * Copyright 2017 Google Inc. All Rights Reserved.
@@ -122,7 +122,7 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
  * limitations under the License.
  */
 
-// Below are the codes from the internet to convert audio file
+// Below are the codes from https://stackoverflow.com/questions/42773497/can-you-call-out-to-ffmpeg-in-a-firebase-cloud-function/43970491#43970491 to convert audio file
 // But also have some bugs
 const functions = require('firebase-functions');
 const gcs = require('@google-cloud/storage');
@@ -139,7 +139,6 @@ admin.initializeApp();
  * node-fluent-ffmpeg.
  */
 
-
 exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
   const fileBucket = object.bucket; // The Storage bucket that contains the file.
   const filePath = object.name; // File path in the bucket.
@@ -150,7 +149,7 @@ exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
   // Exit if this is triggered on a file that is not an audio.
   if (!contentType.startsWith('video/')) {
     console.log('This is not an audio.');
-    return;
+    return null;
   }
 
   // Get the file name.
@@ -158,20 +157,20 @@ exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
   // Exit if the audio is already converted.
   if (fileName.endsWith('_output.flac')) {
     console.log('Already a converted audio.');
-    return;
+    return null;
   }
 
   // Exit if this is a move or deletion event.
   if (resourceState === 'not_exists') {
     console.log('This is a deletion event.');
-    return;
+    return null;
   }
 
   // Exit if file exists but is not new and is only being triggered
   // because of a metadata change.
   if (resourceState === 'exists' && metageneration > 1) {
     console.log('This is a metadata change event.');
-    return;
+    return null;
   }
 
   // Download file from bucket.
@@ -211,5 +210,6 @@ exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
         });
       })
       .save(targetTempFilePath);
+      console.log("Finished Converting");
   });
 });
