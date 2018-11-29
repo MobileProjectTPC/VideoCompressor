@@ -1,6 +1,5 @@
 // The fist part is the code done by me to compress video
 // but still have a lot of bugs
-/*
 // The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
 const functions = require('firebase-functions');
 
@@ -15,6 +14,7 @@ const fs = require('fs');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegStatic = require('ffmpeg-static');
+const hbjs = require('handbrake-js');
 //ffmpeg.setFfmpegPath(ffmpegInstaller);
 //module.exports = ffmpeg;
 
@@ -44,7 +44,7 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
     console.log("Resource does not exists");
     return null;
   }
-  else if (!contentType.startsWith('audio/')) {
+  else if (!contentType.startsWith('video/')) {
     console.log('Not a video, will not process');
     return null;
   }
@@ -72,13 +72,24 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
       console.log(path.basename(tempFilePath));
       console.log(path.join(path.dirname(tempFilePath),"compressed-" + path.basename(tempFilePath)));
       console.log("Compressing File");
-      //var compressedVideoFilePath = path.join(path.dirname(tempFilePath), "compressed-" + path.basename(tempFilePath));
-      var compressedVideoFilePath = path.join("compressed-" + path.basename(tempFilePath));
+      var compressedVideoFilePath = path.join(path.dirname(tempFilePath), "compressed-" + path.basename(tempFilePath));
+      //var compressedVideoFilePath = path.join("compressed-" + tempFilePath);
       console.log("Compressed File Path: " + compressedVideoFilePath);
-      const command = ffmpeg(tempFilePath).setFfmpegPath(ffmpegStatic.path)
-                                                  .audioChannels(1)
-                                                  .audioFrequency(16000)
-                                                  .format('flac')
+      /*
+      hbjs.spawn({ input: tempFilePath, output: compressedVideoFilePath })
+      .on("progress", function(progress){
+        console.log(
+          "Percent complete: %s, ETA: %s",
+          progress.percentComplete,
+          progress.eta
+        );
+      });
+      */
+      const ffmpegCommand = ffmpeg(tempFilePath).setFfmpegPath(ffmpegStatic.path)
+                                                  .videoBitrate(1000)
+                                                  //.audioChannels(1)
+                                                  //.audioFrequency(16000)
+                                                  //.format('flac')
                                                   .on('error', function(err) {
                                                     console.log('An error occurred: ' + err.message);
                                                   })
@@ -99,12 +110,14 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
                                                     });
                                                   })
                                                   .save(compressedVideoFilePath);
-    console.log("Function Finnished");
+    const = function
+    ffmepgCommand();
+    console.log("Function Finished");
     });
   }
 });
 
-*/
+
 
 /**
  * Copyright 2017 Google Inc. All Rights Reserved.
@@ -121,7 +134,7 @@ exports.fileChange = functions.storage.object().onFinalize(object => {
  * See the License for t`he specific language governing permissions and
  * limitations under the License.
  */
-
+/*
 // Below are the codes from https://stackoverflow.com/questions/42773497/can-you-call-out-to-ffmpeg-in-a-firebase-cloud-function/43970491#43970491 to convert audio file
 // But also have some bugs
 const functions = require('firebase-functions');
@@ -133,12 +146,12 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpeg_static = require('ffmpeg-static');
 const admin = require('firebase-admin');
 admin.initializeApp();
-
+*/
 /**
  * When an audio is uploaded in the Storage bucket We generate a mono channel audio automatically using
  * node-fluent-ffmpeg.
  */
-
+/*
 exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
   const fileBucket = object.bucket; // The Storage bucket that contains the file.
   const filePath = object.name; // File path in the bucket.
@@ -213,3 +226,4 @@ exports.generateMonoAudio = functions.storage.object().onFinalize(object => {
       console.log("Finished Converting");
   });
 });
+*/
